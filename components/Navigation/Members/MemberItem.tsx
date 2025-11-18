@@ -1,75 +1,83 @@
-// components/navigation/members/MemberItem.tsx
 "use client";
 
-import Image from "next/image";
-import { memo } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/cn";
-import type { Member } from "../../mocks/mockMembers";
+import Avatar from "@/components/ui/Avatar";
+import type { Member } from "@/components/mocks/mockMembers";
 
-export default memo(function MemberItem({
-  member,
-  onMouseEnter,
-  onMouseLeave,
-  compact = false,
-}: {
+interface MemberItemProps {
   member: Member;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
   compact?: boolean;
-}) {
-  const statusColorMap: Record<Member["status"], string> = {
-    online: "bg-green-500",
-    idle: "bg-yellow-400",
-    dnd: "bg-red-500",
-    offline: "bg-gray-500",
-  };
+  onClick?: () => void;
+}
+
+export default React.memo(function MemberItem({
+  member,
+  compact = false,
+  onClick,
+}: MemberItemProps) {
+  const [showPopover, setShowPopover] = useState(false);
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      className={cn(
-        "flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[#2b2d31] transition-colors",
-        compact ? "py-1" : ""
-      )}
-      aria-label={`${member.username} ${member.status}`}
-    >
-      <div className="relative flex-shrink-0 w-9 h-9">
-        {member.avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={member.avatar}
-            alt={`${member.username} avatar`}
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full rounded-full bg-[#2a2b2f] flex items-center justify-center text-xs font-semibold text-white">
-            {member.username.substring(0, 1).toUpperCase()}
-          </div>
+    <div className="relative">
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setShowPopover(true)}
+        onMouseLeave={() => setShowPopover(false)}
+        className={cn(
+          "w-full flex items-center gap-3 px-2 rounded group",
+          "hover:bg-[#35373c] transition-colors text-left",
+          compact ? "py-1" : "py-2"
         )}
-
-        <span
-          className={cn(
-            "absolute right-0 bottom-0 w-3 h-3 rounded-full ring-2 ring-[#0f1113]",
-            statusColorMap[member.status]
-          )}
-          aria-hidden
+      >
+        <Avatar
+          src={member.avatar ?? undefined}
+          alt={member.username}
+          size={compact ? 28 : 32}
+          status={member.status}
+          fallback={member.username}
         />
-      </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-medium text-white truncate">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-[#dbdee1] truncate">
             {member.username}
-          </span>
-          {member.tag ? (
-            <span className="text-[11px] text-gray-400">{member.tag}</span>
-          ) : null}
+          </div>
+          {!compact && member.tag && (
+            <div className="text-xs text-[#87888c] truncate">{member.tag}</div>
+          )}
         </div>
-        <div className="text-xs text-gray-400 truncate">{member.role}</div>
-      </div>
+      </button>
+
+      {/* Member Popover - show on hover */}
+      {showPopover && (
+        <div className="absolute left-full ml-2 top-0 z-50 w-64 bg-[#111214] rounded-lg shadow-2xl border border-[#1e1f22] p-4 pointer-events-none">
+          <div className="flex flex-col items-center">
+            <Avatar
+              src={member.avatar ?? undefined}
+              alt={member.username}
+              size={80}
+              status={member.status}
+              fallback={member.username}
+            />
+            <h3 className="mt-3 text-xl font-bold text-white">
+              {member.username}
+            </h3>
+            {member.tag && (
+              <p className="text-sm text-[#87888c]">{member.tag}</p>
+            )}
+            <div className="mt-3 w-full">
+              <div className="text-xs font-semibold text-[#b5bac1] uppercase mb-2">
+                Roles
+              </div>
+              <div className="flex flex-wrap gap-1">
+                <span className="px-2 py-1 bg-[#5865f2] text-white text-xs rounded">
+                  {member.role}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

@@ -1,21 +1,23 @@
-// store/presence.ts
 import { create } from "zustand";
 
 export type PresenceStatus = "online" | "idle" | "dnd" | "offline";
 
-export type Presence = {
+export interface Presence {
   userId: string;
   status: PresenceStatus;
+  customStatus?: string | null;
   updatedAt: number;
-};
+}
 
-type PresenceState = {
+interface PresenceState {
   presence: Record<string, Presence>;
   setPresence: (p: Presence) => void;
+  bulkSetPresence: (presences: Presence[]) => void;
   removePresence: (userId: string) => void;
-};
+  getPresence: (userId: string) => Presence | null;
+}
 
-export const usePresenceStore = create<PresenceState>((set) => ({
+export const usePresenceStore = create<PresenceState>((set, get) => ({
   presence: {},
 
   setPresence: (p) =>
@@ -26,10 +28,23 @@ export const usePresenceStore = create<PresenceState>((set) => ({
       },
     })),
 
+  bulkSetPresence: (presences) =>
+    set((state) => {
+      const updated = { ...state.presence };
+      presences.forEach((p) => {
+        updated[p.userId] = p;
+      });
+      return { presence: updated };
+    }),
+
   removePresence: (userId) =>
     set((state) => {
       const updated = { ...state.presence };
       delete updated[userId];
       return { presence: updated };
     }),
+
+  getPresence: (userId) => {
+    return get().presence[userId] || null;
+  },
 }));

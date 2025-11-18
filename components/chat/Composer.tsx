@@ -1,45 +1,62 @@
-// components/chat/Composer.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { Plus, Gift, Sticker, Smile } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import type { ChatMessage, ChatUser } from "./MessageItem";
+import IconButton from "../ui/IconButton";
+import { cn } from "@/lib/cn";
 
-export default function Composer({
-  channelId,
-  me,
-  onSend,
-}: {
+interface ComposerProps {
   channelId?: string;
   me?: ChatUser;
   onSend?: (m: ChatMessage) => void;
-}) {
+}
+
+export default function Composer({
+  channelId = "general",
+  me,
+  onSend,
+}: ComposerProps) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  }, [text]);
 
   async function handleSend() {
-    if (!text.trim()) return;
+    const trimmed = text.trim();
+    if (!trimmed || sending) return;
+
     setSending(true);
 
     const tempId = "temp_" + uuidv4().slice(0, 8);
     const tempMessage: ChatMessage = {
       id: tempId,
-      channelId: channelId ?? "general",
+      channelId,
       author: me ?? { id: "me", username: "You" },
-      content: text,
+      content: trimmed,
       createdAt: new Date().toISOString(),
       temp: true,
     };
 
-    // optimistic local send via callback
     onSend?.(tempMessage);
-
-    // reset input & sending state
     setText("");
-    setTimeout(() => setSending(false), 400);
+
+    // Simulate network delay
+    setTimeout(() => {
+      setSending(false);
+    }, 300);
   }
 
-  function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -47,27 +64,65 @@ export default function Composer({
   }
 
   return (
-    <div className="p-4 border-t border-[#202225] bg-[#0f1113]">
-      <div className="flex items-start gap-3">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKey}
-          placeholder={`Message #${channelId ?? "general"}`}
-          className="flex-1 resize-none rounded-md bg-[#111214] text-white placeholder-gray-400 px-3 py-3 outline-none ring-1 ring-[#1f2022] focus:ring-indigo-500"
-          rows={2}
+    <div className="px-4 pb-6">
+      <div className="flex items-end gap-4 bg-[#383a40] rounded-lg px-4 py-3">
+        {/* Attachment button */}
+        <IconButton
+          icon={<Plus size={20} />}
+          label="Add attachments"
+          className="text-[#b5bac1] hover:text-white"
         />
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={handleSend}
-            className={`px-4 py-2 rounded-md font-semibold ${
-              sending ? "bg-indigo-400/80" : "bg-indigo-500 hover:bg-indigo-600"
-            }`}
-          >
-            Send
-          </button>
+
+        {/* Text input */}
+        <div className="flex-1 relative">
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={`Message #${channelId}`}
+            rows={1}
+            className={cn(
+              "w-full bg-transparent text-[#dbdee1] placeholder-[#87888c]",
+              "resize-none outline-none",
+              "max-h-[200px] overflow-y-auto custom-scroll"
+            )}
+            disabled={sending}
+          />
+        </div>
+
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
+          <IconButton
+            icon={<Gift size={20} />}
+            label="Send gift"
+            className="text-[#b5bac1] hover:text-white"
+          />
+          <IconButton
+            icon={<Sticker size={20} />}
+            label="Send sticker"
+            className="text-[#b5bac1] hover:text-white"
+          />
+          <IconButton
+            icon={<Smile size={20} />}
+            label="Add emoji"
+            className="text-[#b5bac1] hover:text-white"
+          />
         </div>
       </div>
+
+      {/* Character count (optional) */}
+      {text.length > 1900 && (
+        <div className="mt-2 text-xs text-right">
+          <span
+            className={cn(
+              text.length > 2000 ? "text-red-400" : "text-[#949ba4]"
+            )}
+          >
+            {text.length} / 2000
+          </span>
+        </div>
+      )}
     </div>
   );
 }

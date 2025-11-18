@@ -1,15 +1,17 @@
-// components/ui/Avatar.tsx
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/cn";
+import PresenceBadge, { type PresenceStatus } from "./PresenceBadge";
 
-type AvatarProps = {
+interface AvatarProps {
   src?: string;
   alt?: string;
-  size?: number; // px
-  status?: "online" | "idle" | "dnd" | "offline" | null;
+  size?: number;
+  status?: PresenceStatus | null;
   className?: string;
-};
+  fallback?: string;
+}
 
 export default function Avatar({
   src,
@@ -17,34 +19,40 @@ export default function Avatar({
   size = 40,
   status = null,
   className = "",
+  fallback,
 }: AvatarProps) {
-  const statusColor =
-    status === "online"
-      ? "bg-green-400"
-      : status === "idle"
-      ? "bg-yellow-400"
-      : status === "dnd"
-      ? "bg-rose-500"
-      : "bg-gray-600";
+  const [error, setError] = React.useState(false);
+
+  const initials = fallback || alt.substring(0, 2).toUpperCase();
 
   return (
     <div
-      className={`relative inline-block ${className}`}
+      className={cn("relative inline-block shrink-0", className)}
       style={{ width: size, height: size }}
     >
-      <img
-        src={src ?? "/avatars/1.png"}
-        alt={alt}
-        width={size}
-        height={size}
-        className="rounded-full object-cover w-full h-full"
-        draggable={false}
-      />
-      {status && (
-        <span
-          aria-hidden="true"
-          className={`absolute bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-black ${statusColor}`}
+      {!error && src ? (
+        <img
+          src={src}
+          alt={alt}
+          width={size}
+          height={size}
+          className="w-full h-full rounded-full object-cover"
+          draggable={false}
+          onError={() => setError(true)}
         />
+      ) : (
+        <div
+          className="w-full h-full rounded-full flex items-center justify-center bg-[#5865f2] text-white font-semibold"
+          style={{ fontSize: size / 2.5 }}
+        >
+          {initials}
+        </div>
+      )}
+
+      {status && (
+        <div className="absolute bottom-0 right-0 translate-x-0.5 translate-y-0.5">
+          <PresenceBadge status={status} size={size > 32 ? "md" : "sm"} />
+        </div>
       )}
     </div>
   );

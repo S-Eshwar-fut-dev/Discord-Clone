@@ -1,65 +1,88 @@
-// components/overlays/AddFriendModal.tsx
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useFriendsStore } from "@/store/friends";
 import { v4 as uuidv4 } from "uuid";
-import { motion } from "framer-motion";
+import Modal from "@/components/ui/Modal";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
-export default function AddFriendModal({ onClose }: { onClose?: () => void }) {
-  const [q, setQ] = useState("");
+interface AddFriendModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function AddFriendModal({
+  isOpen,
+  onClose,
+}: AddFriendModalProps) {
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const addFriend = useFriendsStore((s) => s.addFriend);
 
-  function handleAdd() {
-    const username = q.trim();
-    if (!username) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    const trimmed = username.trim();
+    if (!trimmed) {
+      setError("Please enter a username");
+      return;
+    }
+
+    // Validate format (username#1234)
+    if (!trimmed.includes("#")) {
+      setError("Please use format: Username#1234");
+      return;
+    }
+
+    setLoading(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const newFriend = {
       id: uuidv4(),
-      username,
-      tag: `#${Math.floor(Math.random() * 9000 + 1000)}`,
+      username: trimmed.split("#")[0],
+      tag: `#${trimmed.split("#")[1] || "0000"}`,
       avatar: null,
       status: "offline" as const,
       lastMessage: "",
       unread: 0,
     };
+
     addFriend(newFriend);
-    onClose?.();
-  }
+    setLoading(false);
+    setUsername("");
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <motion.div
-        initial={{ scale: 0.985, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="w-[420px] bg-[#161617] rounded-md p-5 shadow-lg border border-[#27292b]"
-      >
-        <h3 className="text-lg font-semibold text-white mb-3">Add a friend</h3>
-        <p className="text-sm text-gray-400 mb-4">
-          Enter their username (example: Eshwar#0001)
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Friend" size="sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-sm text-[#b5bac1]">
+          You can add friends with their Discord username.
         </p>
 
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+        <Input
+          label="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           placeholder="Username#1234"
-          className="w-full px-3 py-2 rounded-md bg-[#0f1113] text-white outline-none ring-1 ring-[#1f2022]"
+          error={error}
+          required
         />
 
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            onClick={() => onClose?.()}
-            className="px-3 py-2 rounded-md hover:bg-[#232427]"
-          >
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancel
-          </button>
-          <button
-            onClick={handleAdd}
-            className="px-3 py-2 rounded-md bg-indigo-500 hover:bg-indigo-600 text-white"
-          >
-            Send Request
-          </button>
+          </Button>
+          <Button type="submit" loading={loading}>
+            Send Friend Request
+          </Button>
         </div>
-      </motion.div>
-    </div>
+      </form>
+    </Modal>
   );
 }

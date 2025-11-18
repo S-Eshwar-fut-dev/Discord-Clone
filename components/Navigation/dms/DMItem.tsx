@@ -1,75 +1,74 @@
 "use client";
 
 import React from "react";
-import { Friend } from "../../mocks/mockFriends";
+import { X } from "lucide-react";
+import { Friend } from "@/components/mocks/mockFriends";
+import Avatar from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
+
+interface DMItemProps {
+  friend: Friend;
+  onClick?: (f: Friend) => void;
+  onClose?: (f: Friend) => void;
+  isActive?: boolean;
+}
 
 export default function DMItem({
   friend,
   onClick,
-}: {
-  friend: Friend;
-  onClick?: (f: Friend) => void;
-}) {
-  const statusColor: Record<Friend["status"], string> = {
-    online: "bg-green-500",
-    idle: "bg-yellow-400",
-    dnd: "bg-red-500",
-    offline: "bg-gray-500",
-  };
-
+  onClose,
+  isActive = false,
+}: DMItemProps) {
   return (
     <button
       onClick={() => onClick?.(friend)}
       className={cn(
-        "w-full text-left flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[#232427] transition"
+        "group w-full flex items-center gap-3 px-2 py-2 rounded transition-colors",
+        isActive
+          ? "bg-[#404249] text-white"
+          : "hover:bg-[#35373c] text-[#b5bac1]"
       )}
-      aria-label={`Open DM with ${friend.username}`}
     >
-      <div className="relative w-10 h-10 flex-shrink-0">
-        {friend.avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={friend.avatar}
-            alt={friend.username}
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full rounded-full bg-[#2a2b2f] flex items-center justify-center text-xs font-semibold text-white">
-            {friend.username[0]}
-          </div>
-        )}
+      <Avatar
+        src={friend.avatar ?? undefined}
+        alt={friend.username}
+        size={32}
+        status={friend.status}
+        fallback={friend.username}
+      />
 
-        <span
-          className={cn(
-            "absolute right-0 bottom-0 w-3 h-3 rounded-full ring-2 ring-[#0f1113]",
-            statusColor[friend.status]
-          )}
-          aria-hidden
-        />
-      </div>
-
-      <div className="min-w-0 flex-1">
+      <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white truncate">
+          <span className="text-sm font-medium truncate">
             {friend.username}
           </span>
           {friend.tag && (
-            <span className="text-[11px] text-gray-400">{friend.tag}</span>
+            <span className="text-xs text-[#87888c]">{friend.tag}</span>
           )}
         </div>
-        <div className="text-xs text-gray-400 truncate">
-          {friend.lastMessage ?? ""}
-        </div>
+        {friend.lastMessage && (
+          <div className="text-xs text-[#87888c] truncate">
+            {friend.lastMessage}
+          </div>
+        )}
       </div>
 
-      {friend.unread ? (
-        <div className="ml-2">
-          <div className="bg-indigo-500 text-[11px] font-semibold px-2 py-[2px] rounded-full">
-            {friend.unread}
-          </div>
+      {/* Unread badge */}
+      {friend.unread && friend.unread > 0 ? (
+        <div className="flex-none w-5 h-5 flex items-center justify-center bg-[#f23f43] text-white text-xs font-bold rounded-full">
+          {friend.unread}
         </div>
-      ) : null}
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose?.(friend);
+          }}
+          className="flex-none opacity-0 group-hover:opacity-100 p-1 hover:bg-[#2b2d31] rounded transition-opacity"
+        >
+          <X size={16} />
+        </button>
+      )}
     </button>
   );
 }

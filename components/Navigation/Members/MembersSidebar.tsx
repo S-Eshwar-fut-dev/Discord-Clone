@@ -1,76 +1,97 @@
-// components/navigation/members/MembersSidebar.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
+import { Search } from "lucide-react";
 import MemberItem from "./MemberItem";
-import MemberPopover from "./MemberPopover";
-import { mockMembers, type Member } from "../../mocks/mockMembers";
+import { mockMembers, type Member } from "@/components/mocks/mockMembers";
 import { cn } from "@/lib/cn";
+
+interface MembersSidebarProps {
+  compact?: boolean;
+}
 
 export default function MembersSidebar({
   compact = false,
-}: {
-  compact?: boolean;
-}) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+}: MembersSidebarProps) {
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // group by role (owner, moderator, members, bots)
-  const grouped = useMemo(() => {
-    const map = new Map<string, Member[]>();
-    for (const m of mockMembers) {
-      const role = m.role || "Members";
-      if (!map.has(role)) map.set(role, []);
-      map.get(role)!.push(m);
-    }
-    return Array.from(map.entries());
-  }, []);
+  // Group members by role and filter by search
+  const groupedMembers = useMemo(() => {
+    const filtered = mockMembers.filter((m) =>
+      m.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const groups = new Map<string, Member[]>();
+    filtered.forEach((member) => {
+      const role = member.role || "Members";
+      if (!groups.has(role)) groups.set(role, []);
+      groups.get(role)!.push(member);
+    });
+
+    // Sort by online status within each group
+    groups.forEach((members) => {
+      members.sort((a, b) => {
+        const statusOrder = { online: 0, idle: 1, dnd: 2, offline: 3 };
+        return statusOrder[a.status] - statusOrder[b.status];
+      });
+    });
+
+    return Array.from(groups.entries());
+  }, [searchQuery]);
+
+  const totalMembers = mockMembers.length;
+  const onlineMembers = mockMembers.filter((m) => m.status === "online").length;
 
   return (
-    <aside
-      className={cn(
-        "h-full overflow-y-auto bg-[#161617] p-3 text-gray-200",
-        compact ? "w-48" : "w-80"
-      )}
-    >
-      <div className="mb-3">
-        <div className="text-sm font-semibold text-white flex items-center justify-between">
-          <span>Members</span>
-          <span className="text-xs text-gray-400">{mockMembers.length}</span>
+    <aside className="h-full flex flex-col bg-[#2b2d31]">
+      {/* Header */}
+      <div className="flex-none px-3 py-4 border-b border-[#1e1f22]">
+        <h2 className="text-xs font-semibold uppercase text-[#949ba4] mb-3">
+          Members — {totalMembers}
+        </h2>
+
+        {/* Search */}
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#87888c]"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search members"
+            className="w-full pl-9 pr-3 py-1.5 bg-[#1e1f22] text-sm text-[#dbdee1] placeholder-[#87888c] rounded outline-none focus:ring-1 focus:ring-[#00a8fc]"
+          />
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {grouped.map(([role, members]) => (
-          <div key={role}>
-            <div className="text-xs text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
-              <span>{role}</span>
-              <span className="text-[11px] text-gray-500">
-                {members.length}
-              </span>
+      {/* Members list */}
+      <div className="flex-1 overflow-y-auto custom-scroll px-2 py-2">
+        {groupedMembers.map(([role, members]) => (
+          <div key={role} className="mb-4">
+            {/* Role header */}
+            <div className="flex items-center justify-between px-2 mb-1">
+              <h3 className="text-xs font-semibold uppercase text-[#949ba4]">
+                {role}
+              </h3>
+              <span className="text-xs text-[#87888c]">{members.length}</span>
             </div>
 
-            <div className="flex flex-col gap-1 relative">
-              {members.map((m) => (
-                <div key={m.id} className="relative">
-                  <MemberItem
-                    member={m}
-                    onMouseEnter={() => setHoveredId(m.id)}
-                    onMouseLeave={() =>
-                      setHoveredId((cur) => (cur === m.id ? null : cur))
-                    }
-                    compact={compact}
-                  />
-
-                  {hoveredId === m.id && (
-                    <div className="absolute right-full top-0 mr-2">
-                      <MemberPopover member={m} />
-                    </div>
-                  )}
-                </div>
+            {/* Members */}
+            <div className="space-y-0.5">
+              {members.map((member) => (
+                <MemberItem key={member.id} member={member} compact={compact} />
               ))}
             </div>
           </div>
         ))}
+
+        {groupedMembers.length === 0 && (
+          <div className="flex items-center justify-center h-32 text-sm text-[#87888c]">
+            No members found
+          </div>
+        )}
       </div>
     </aside>
   );

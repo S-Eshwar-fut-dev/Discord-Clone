@@ -1,9 +1,10 @@
-// components/chat/MessageItem.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import { MoreHorizontal, Reply, SmilePlus, Trash2, Edit3 } from "lucide-react";
 import Avatar from "../ui/Avatar";
-import { formatMessageTime } from "@/lib/time";
+import { formatTimestamp } from "@/lib/time";
+import { cn } from "@/lib/cn";
 
 export type ChatUser = {
   id: string;
@@ -18,132 +19,159 @@ export type ChatMessage = {
   author: ChatUser;
   content: string;
   attachments?: Array<{ url: string; filename?: string }>;
-  createdAt: string; // ISO string
+  createdAt: string;
   editedAt?: string | null;
-  temp?: boolean; // optimistic frontend-only flag
+  temp?: boolean;
 };
 
-/**
- * MessageItem props:
- * - message: the message to render
- * - isFirstInGroup: whether to render avatar+username (false for grouped messages)
- * - showTimestamp: whether to show timestamp on hover (defaults to small inline)
- */
+interface MessageItemProps {
+  message: ChatMessage;
+  isFirstInGroup?: boolean;
+  showTimestamp?: boolean;
+}
+
 export default React.memo(function MessageItem({
   message,
   isFirstInGroup = true,
   showTimestamp = true,
-}: {
-  message: ChatMessage;
-  isFirstInGroup?: boolean;
-  showTimestamp?: boolean;
-}) {
+}: MessageItemProps) {
+  const [showActions, setShowActions] = useState(false);
   const timeLabel = useMemo(
-    () => formatMessageTime(message.createdAt),
+    () => formatTimestamp(message.createdAt),
     [message.createdAt]
   );
 
   return (
-    <article
-      aria-labelledby={`msg-${message.id}-author`}
-      className="flex items-start gap-3 px-4 py-2 select-text group"
+    <div
+      className={cn(
+        "group relative px-4 py-0.5 hover:bg-[#2e3035] message-item",
+        isFirstInGroup ? "mt-4" : "mt-0.5"
+      )}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
     >
-      {/* Avatar column - hidden for grouped messages */}
-      <div className="flex-shrink-0">
-        {isFirstInGroup ? (
-          <Avatar
-            src={message.author.avatar ?? undefined}
-            alt={`${message.author.username} avatar`}
-            size={40}
-            status={message.author.status ?? null}
-          />
-        ) : (
-          // keep space for alignment
-          <div style={{ width: 40 }} />
-        )}
-      </div>
-
-      {/* Message body */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <div className="flex gap-3 items-center min-w-0">
-            {isFirstInGroup && (
-              <h4
-                id={`msg-${message.id}-author`}
-                className="text-sm font-semibold text-white truncate"
-              >
-                {message.author.username}
-              </h4>
-            )}
-
-            {/* timestamp inline */}
-            {showTimestamp && (
-              <span className="text-xs text-gray-400 shrink-0">
-                {timeLabel}
-                {message.temp ? " • sending…" : ""}
-              </span>
-            )}
-          </div>
-
-          {/* right-aligned small actions visible on hover */}
-          <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 text-sm flex gap-2">
-            {/* Placeholder actions; wire actual handlers later */}
-            <button aria-label="React" className="hover:text-gray-200">
-              😀
-            </button>
-            <button aria-label="More" className="hover:text-gray-200">
-              ⋯
-            </button>
-          </div>
+      <div className="flex items-start gap-4">
+        {/* Avatar column */}
+        <div className="shrink-0 w-10">
+          {isFirstInGroup ? (
+            <Avatar
+              src={message.author.avatar ?? undefined}
+              alt={message.author.username}
+              size={40}
+              status={message.author.status ?? null}
+              fallback={message.author.username}
+            />
+          ) : (
+            <span className="text-[10px] text-[#949ba4] opacity-0 group-hover:opacity-100 transition-opacity text-right block w-full pr-1 leading-[22px]">
+              {timeLabel}
+            </span>
+          )}
         </div>
 
         {/* Message content */}
-        <div className="mt-1 text-sm text-gray-100 break-words whitespace-pre-wrap">
-          {message.content}
+        <div className="flex-1 min-w-0">
+          {isFirstInGroup && (
+            <div className="flex items-baseline gap-2 mb-0.5">
+              <span className="text-sm font-semibold text-white hover:underline cursor-pointer">
+                {message.author.username}
+              </span>
+              <span className="text-xs text-[#949ba4]">{timeLabel}</span>
+              {message.temp && (
+                <span className="text-xs text-[#949ba4]">(sending...)</span>
+              )}
+            </div>
+          )}
+
+          {/* Message text */}
+          <div className="text-[15px] text-[#dbdee1] wrap-break-word">
+            {message.content}
+          </div>
+
+          {/* Attachments */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mt-2 flex flex-col gap-2">
+              {message.attachments.map((attachment, idx) => {
+                const isImage = /\.(jpe?g|png|webp|gif)$/i.test(attachment.url);
+                return (
+                  <div key={idx} className="max-w-[400px]">
+                    {isImage ? (
+                      // FIX: Added missing <a> tag
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-md overflow-hidden border border-[#3f4147] hover:border-[#4e5058] transition-colors"
+                      >
+                        <img
+                          src={attachment.url}
+                          alt={attachment.filename || "attachment"}
+                          className="w-full h-auto max-h-[350px] object-contain"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      // FIX: Added missing <a> tag
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-[#2b2d31] border border-[#3f4147] rounded hover:bg-[#32353b] transition-colors"
+                      >
+                        <div className="text-[#b5bac1]">📎</div>
+                        <span className="text-sm text-[#00a8fc] hover:underline">
+                          {attachment.filename || "Download"}
+                        </span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Edited indicator */}
+          {message.editedAt && (
+            <span className="text-[10px] text-[#949ba4] ml-1">(edited)</span>
+          )}
         </div>
-
-        {/* attachments (images/files) */}
-        {message.attachments?.length ? (
-          <div className="mt-2 grid grid-cols-1 gap-2">
-            {message.attachments.map((a, idx) => {
-              const isImage = /\.(jpe?g|png|webp|gif|svg)$/i.test(a.url);
-              return (
-                <div
-                  key={idx}
-                  className="rounded-md overflow-hidden border border-[#242526] bg-[#0e0f10] max-w-full"
-                >
-                  {isImage ? (
-                    <img
-                      src={a.url}
-                      alt={a.filename ?? "attachment"}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-105"
-                      style={{ maxHeight: 420 }}
-                    />
-                  ) : (
-                    <a
-                      href={a.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block px-3 py-2 bg-[#0e0f10] hover:bg-[#111214] text-xs text-indigo-200"
-                    >
-                      {a.filename ?? a.url}
-                    </a>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {/* edited indicator */}
-        {message.editedAt && (
-          <div className="text-xs text-gray-500 mt-1">
-            edited • {new Date(message.editedAt).toLocaleString()}
-          </div>
-        )}
       </div>
-    </article>
+
+      {/* Hover actions */}
+      {showActions && (
+        <div className="absolute -top-4 right-4 flex items-center gap-1 bg-[#2b2d31] border border-[#3f4147] rounded-md shadow-lg p-1 z-10">
+          <button
+            className="p-1.5 hover:bg-[#404249] rounded text-[#b5bac1] hover:text-white transition-colors"
+            title="Add reaction"
+          >
+            <SmilePlus size={18} />
+          </button>
+          <button
+            className="p-1.5 hover:bg-[#404249] rounded text-[#b5bac1] hover:text-white transition-colors"
+            title="Reply"
+          >
+            <Reply size={18} />
+          </button>
+          <button
+            className="p-1.5 hover:bg-[#404249] rounded text-[#b5bac1] hover:text-white transition-colors"
+            title="Edit"
+          >
+            <Edit3 size={18} />
+          </button>
+          <div className="w-px h-5 bg-[#3f4147] mx-1" />
+          <button
+            className="p-1.5 hover:bg-[#da373c] rounded text-[#b5bac1] hover:text-white transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={18} />
+          </button>
+          <button
+            className="p-1.5 hover:bg-[#404249] rounded text-[#b5bac1] hover:text-white transition-colors"
+            title="More"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 });

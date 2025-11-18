@@ -21,7 +21,7 @@ export default function GuildIcon({
 
       <div
         className={`
-          w-[48px] h-[48px] rounded-3xl overflow-hidden 
+          w-12 h-12 rounded-3xl overflow-hidden 
           flex items-center justify-center
           bg-[#2a2b2f]
           transition-all 

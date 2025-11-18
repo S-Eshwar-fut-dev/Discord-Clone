@@ -10,8 +10,8 @@ export const mockMessages: ChatMessage[] = [
       avatar: "/avatars/1.png",
       status: "online",
     },
-    content: "Yo bruh, welcome to Eoncord 😎",
-    createdAt: new Date().toISOString(),
+    content: "Hey everyone! Welcome to Eoncord 🎉",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
   },
   {
     id: "2",
@@ -22,7 +22,87 @@ export const mockMessages: ChatMessage[] = [
       avatar: "/avatars/2.png",
       status: "offline",
     },
-    content: "Thankyou bruh",
-    createdAt: new Date().toISOString(),
+    content: "Thanks! This looks amazing",
+    createdAt: new Date(
+      Date.now() - 1000 * 60 * 60 * 24 * 2 + 1000 * 60 * 2
+    ).toISOString(),
+  },
+  {
+    id: "3",
+    channelId: "general",
+    author: {
+      id: "u2",
+      username: "InnocentZERO",
+      avatar: "/avatars/2.png",
+      status: "offline",
+    },
+    content: "The UI is really clean",
+    createdAt: new Date(
+      Date.now() - 1000 * 60 * 60 * 24 * 2 + 1000 * 60 * 3
+    ).toISOString(),
+  },
+  {
+    id: "4",
+    channelId: "general",
+    author: {
+      id: "u3",
+      username: "KingDudeDS",
+      avatar: "/avatars/3.png",
+      status: "idle",
+    },
+    content: "When are we launching this?",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Yesterday
+  },
+  {
+    id: "5",
+    channelId: "general",
+    author: {
+      id: "u1",
+      username: "Eshwar",
+      avatar: "/avatars/1.png",
+      status: "online",
+    },
+    content: "Working on it! Should be ready soon.",
+    createdAt: new Date(
+      Date.now() - 1000 * 60 * 60 * 24 + 1000 * 60 * 5
+    ).toISOString(),
+  },
+  {
+    id: "6",
+    channelId: "general",
+    author: {
+      id: "u1",
+      username: "Eshwar",
+      avatar: "/avatars/1.png",
+      status: "online",
+    },
+    content: "Just need to polish a few more components",
+    createdAt: new Date(
+      Date.now() - 1000 * 60 * 60 * 24 + 1000 * 60 * 6
+    ).toISOString(),
+  },
+  {
+    id: "7",
+    channelId: "general",
+    author: {
+      id: "u4",
+      username: "MONJIRO",
+      avatar: "/avatars/4.png",
+      status: "dnd",
+    },
+    content: "I can help with testing if you need",
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+  },
+  {
+    id: "8",
+    channelId: "general",
+    author: {
+      id: "u1",
+      username: "Eshwar",
+      avatar: "/avatars/1.png",
+      status: "online",
+    },
+    content: "That would be great! Let me know what you find.",
+    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
   },
 ];

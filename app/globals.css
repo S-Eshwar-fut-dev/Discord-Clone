@@ -25,31 +25,28 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Discord-like scrollbar */
 :root {
-  --scrollbar-track: #0f1113; /* track bg */
-  --scrollbar-thumb: #3a3b3d; /* thumb normal */
-  --scrollbar-thumb-hover: #5a5b5d; /* thumb hover */
-  --scrollbar-width: 10px;
+  --scrollbar-track: #2b2d31;
+  --scrollbar-thumb: #1a1b1e;
+  --scrollbar-thumb-hover: #202225;
+  --scrollbar-width: 8px;
 }
 
 .custom-scroll::-webkit-scrollbar {
   width: var(--scrollbar-width);
   height: var(--scrollbar-width);
 }
+
 .custom-scroll::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
-  border-radius: 999px;
 }
+
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    var(--scrollbar-thumb),
-    var(--scrollbar-thumb)
-  );
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
 }
+
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
@@ -59,7 +56,12 @@ body {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-.custom-scroll.has-top-shadow::before {
+/* Smooth scroll shadow for lists */
+.scroll-shadow-top {
+  position: relative;
+}
+
+.scroll-shadow-top::before {
   content: "";
   position: absolute;
   top: 0;
@@ -67,7 +69,140 @@ body {
   right: 0;
   height: 8px;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent);
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.scroll-shadow-top.has-scroll::before {
+  opacity: 1;
+}
+
+/* Message hover state */
+.message-item {
+  transition: background-color 0.1s ease;
+}
+
+.message-item:hover {
+  background-color: rgba(4, 4, 5, 0.07);
+}
+
+/* Unread marker */
+.unread-marker {
+  position: relative;
+  height: 1px;
+  margin: 8px 0;
+  background: #f23f42;
+}
+
+.unread-marker::before {
+  content: "NEW";
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  padding: 2px 6px;
+  background: #f23f42;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* Day separator */
+.day-separator {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  color: #949ba4;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.day-separator::before,
+.day-separator::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #3f4147;
+}
+
+.day-separator span {
+  padding: 0 16px;
+}
+
+/* Typing indicator */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+.typing-indicator span {
+  animation: typing-dot 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Presence badge */
+.presence-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid #2b2d31;
+}
+
+.presence-online {
+  background: #23a55a;
+}
+
+.presence-idle {
+  background: #f0b232;
+}
+
+.presence-dnd {
+  background: #f23f43;
+}
+
+.presence-offline {
+  background: #80848e;
+}
+
+/* Channel item active state */
+.channel-item-active {
+  background: #404249;
+  color: #ffffff;
+}
+
+/* Smooth transitions */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid #00a8fc;
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: #4752c4;
+  color: white;
 }

@@ -1,27 +1,25 @@
-// components/Navigation/dms/DMSidebar.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Search, UserPlus } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Search, UserPlus, Users } from "lucide-react";
 import DMItem from "./DMItem";
-import FriendRequests from "./FriendRequests";
-import { mockFriends, type Friend } from "../../mocks/mockFriends";
+import { mockFriends, type Friend } from "@/components/mocks/mockFriends";
 import { useFriendsStore } from "@/store/friends";
-import AddFriendModal from "../../overlays/AddFriendModal";
+import IconButton from "@/components/ui/IconButton";
 import { cn } from "@/lib/cn";
 
-export default function DMSidebar({
-  onOpenDM,
-}: {
+interface DMSidebarProps {
   onOpenDM?: (f: Friend) => void;
-}) {
+}
+
+export default function DMSidebar({ onOpenDM }: DMSidebarProps) {
   const { friends, setFriends } = useFriendsStore();
   const [query, setQuery] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [activeDmId, setActiveDmId] = useState<string | null>(null);
 
   useEffect(() => {
     setFriends(mockFriends);
-  }, []);
+  }, [setFriends]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -34,85 +32,98 @@ export default function DMSidebar({
   const online = filtered.filter((f) => f.status === "online");
   const offline = filtered.filter((f) => f.status !== "online");
 
+  const handleOpenDM = (friend: Friend) => {
+    setActiveDmId(friend.id);
+    onOpenDM?.(friend);
+  };
+
   return (
-    <aside className="p-3 bg-[#111214] rounded-md">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Direct Messages</h3>
-        <button
-          onClick={() => setShowAdd(true)}
-          title="Add Friend"
-          className="p-1 rounded-md hover:bg-[#232427]"
-        >
-          <UserPlus />
-        </button>
-      </div>
+    <aside className="h-full flex flex-col bg-[#2b2d31] overflow-hidden">
+      {/* Header */}
+      <div className="flex-none px-3 py-3 border-b border-[#1e1f22]">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-semibold uppercase text-[#949ba4]">
+            Direct Messages
+          </h2>
+          <IconButton
+            icon={<UserPlus size={16} />}
+            label="Create DM"
+            size="sm"
+          />
+        </div>
 
-      <div className="mb-3">
-        <FriendRequests
-          count={2}
-          onOpen={() => console.log("open friend reqs")}
-        />
-      </div>
-
-      <div className="flex items-center gap-2 px-2">
-        <div className="relative flex-1">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <Search />
-          </div>
+        {/* Search */}
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#87888c]"
+          />
           <input
+            type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search or start a conversation"
-            className="w-full pl-10 pr-3 py-2 rounded-md bg-[#141516] text-white placeholder-gray-500 outline-none ring-1 ring-[#1f2022]"
+            placeholder="Search conversations"
+            className="w-full pl-9 pr-3 py-1.5 bg-[#1e1f22] text-sm text-[#dbdee1] placeholder-[#87888c] rounded outline-none focus:ring-1 focus:ring-[#00a8fc]"
           />
         </div>
       </div>
 
-      <div className="mt-3 space-y-3">
-        {/* Online section */}
-        <div>
-          <div className="text-xs text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
-            <span>Online — {online.length}</span>
+      {/* Friends button */}
+      <div className="flex-none px-2 py-2 border-b border-[#1e1f22]">
+        <button className="w-full flex items-center gap-3 px-2 py-2 rounded hover:bg-[#35373c] transition-colors text-left">
+          <div className="w-8 h-8 bg-[#5865f2] rounded-full flex items-center justify-center">
+            <Users size={18} className="text-white" />
           </div>
-          <div className="flex flex-col gap-1">
-            {online.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-400">
-                No one online
-              </div>
-            ) : (
-              online.map((f) => (
-                <DMItem
-                  key={f.id}
-                  friend={f}
-                  onClick={(fr) => onOpenDM?.(fr)}
-                />
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* All friends */}
-        <div>
-          <div className="text-xs text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
-            <span>All Friends — {filtered.length}</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            {offline.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-400">No friends</div>
-            ) : (
-              offline.map((f) => (
-                <DMItem
-                  key={f.id}
-                  friend={f}
-                  onClick={(fr) => onOpenDM?.(fr)}
-                />
-              ))
-            )}
-          </div>
-        </div>
+          <span className="text-sm font-medium text-[#dbdee1]">Friends</span>
+        </button>
       </div>
 
-      {showAdd && <AddFriendModal onClose={() => setShowAdd(false)} />}
+      {/* DMs list */}
+      <div className="flex-1 overflow-y-auto custom-scroll px-2 py-2">
+        {/* Online */}
+        {online.length > 0 && (
+          <div className="mb-4">
+            <h3 className="px-2 mb-1 text-xs font-semibold uppercase text-[#949ba4]">
+              Online — {online.length}
+            </h3>
+            <div className="space-y-0.5">
+              {online.map((f) => (
+                <DMItem
+                  key={f.id}
+                  friend={f}
+                  onClick={handleOpenDM}
+                  isActive={activeDmId === f.id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Offline */}
+        {offline.length > 0 && (
+          <div>
+            <h3 className="px-2 mb-1 text-xs font-semibold uppercase text-[#949ba4]">
+              Offline — {offline.length}
+            </h3>
+            <div className="space-y-0.5">
+              {offline.map((f) => (
+                <DMItem
+                  key={f.id}
+                  friend={f}
+                  onClick={handleOpenDM}
+                  isActive={activeDmId === f.id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {filtered.length === 0 && (
+          <div className="flex items-center justify-center h-32 text-sm text-[#87888c]">
+            No conversations found
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
