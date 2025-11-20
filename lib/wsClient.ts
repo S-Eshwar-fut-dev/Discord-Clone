@@ -1,11 +1,28 @@
 import type { WSMessage } from "@/types/chat";
-
+import type { Reaction } from "@/types/reaction";
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000/ws";
 const RECONNECT_DELAY = 3000;
 const MAX_RECONNECT_ATTEMPTS = 10;
 
 type EventHandler = (data: any) => void;
 
+export interface ReactionAddEvent {
+  type: "reaction:add";
+  payload: {
+    messageId: string;
+    emoji: string;
+    userId: string;
+  };
+}
+
+export interface ReactionRemoveEvent {
+  type: "reaction:remove";
+  payload: {
+    messageId: string;
+    emoji: string;
+    userId: string;
+  };
+}
 export class WSClient {
   private ws: WebSocket | null = null;
   private url: string;

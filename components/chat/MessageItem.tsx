@@ -9,22 +9,34 @@ import {
   Edit3,
   AlertCircle,
 } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import Avatar from "../ui/Avatar";
 import { formatTimestamp } from "@/lib/time";
 import { cn } from "@/lib/cn";
 import type { ChatMessage } from "@/types/chat";
+import ReactionPicker from "./ReactionPicker";
+import ReactionBar from "./ReactionBar";
+import { useReactionsStore } from "@/store/reactions";
+
 interface MessageItemProps {
   message: ChatMessage;
   isFirstInGroup?: boolean;
   showTimestamp?: boolean;
+  currentUserId?: string;
 }
 
 export default React.memo(function MessageItem({
   message,
   isFirstInGroup = true,
   showTimestamp = true,
+  currentUserId = "me",
 }: MessageItemProps) {
   const [showActions, setShowActions] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+
+  const { getReactions, addReaction, removeReaction } = useReactionsStore();
+  const reactions = getReactions(message.id);
+
   const timeLabel = useMemo(
     () => formatTimestamp(message.createdAt),
     [message.createdAt]
@@ -33,6 +45,22 @@ export default React.memo(function MessageItem({
   const isOptimistic = message.temp || message.optimistic;
   const isSending = message.sending;
   const isFailed = message.failed;
+
+  const handleReactionClick = (emoji: string) => {
+    const reaction = reactions.find((r) => r.emoji === emoji);
+
+    if (reaction?.me) {
+      // Remove reaction
+      removeReaction(message.id, emoji, currentUserId);
+    } else {
+      // Add reaction
+      addReaction(message.id, emoji, currentUserId);
+    }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    addReaction(message.id, emoji, currentUserId);
+  };
 
   return (
     <div
@@ -53,7 +81,7 @@ export default React.memo(function MessageItem({
               src={message.author.avatar ?? undefined}
               alt={message.author.username}
               size={40}
-              status={null} // Changed from explicit null if your type implies optional string, but kept as is if component handles null
+              status={null}
               fallback={message.author.username}
             />
           ) : (
@@ -96,7 +124,7 @@ export default React.memo(function MessageItem({
                 return (
                   <div key={idx} className="max-w-[400px]">
                     {isImage ? (
-                      <a
+                      <a // <-- Added the opening <a> tag here
                         href={attachment.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -110,7 +138,7 @@ export default React.memo(function MessageItem({
                         />
                       </a>
                     ) : (
-                      <a
+                      <a // <-- Added the opening <a> tag here for the non-image attachment as well
                         href={attachment.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -128,6 +156,16 @@ export default React.memo(function MessageItem({
             </div>
           )}
 
+          {/* Reactions */}
+          {reactions.length > 0 && (
+            <ReactionBar
+              reactions={reactions}
+              onReactionClick={handleReactionClick}
+              onAddClick={() => setShowReactionPicker(true)}
+              messageId={message.id}
+            />
+          )}
+
           {/* Edited indicator */}
           {message.editedAt && (
             <span className="text-[10px] text-[#949ba4] ml-1">(edited)</span>
@@ -135,10 +173,11 @@ export default React.memo(function MessageItem({
         </div>
       </div>
 
-      {/* Hover actions - hide for optimistic/failed messages */}
+      {/* Hover actions */}
       {showActions && !isOptimistic && !isFailed && (
         <div className="absolute -top-4 right-4 flex items-center gap-1 bg-[#2b2d31] border border-[#3f4147] rounded-md shadow-lg p-1 z-10">
           <button
+            onClick={() => setShowReactionPicker(!showReactionPicker)}
             className="p-1.5 hover:bg-[#404249] rounded text-[#b5bac1] hover:text-white transition-colors"
             title="Add reaction"
           >
@@ -169,6 +208,16 @@ export default React.memo(function MessageItem({
           >
             <MoreHorizontal size={18} />
           </button>
+
+          {/* Reaction Picker */}
+          <AnimatePresence>
+            {showReactionPicker && (
+              <ReactionPicker
+                onSelect={handleEmojiSelect}
+                onClose={() => setShowReactionPicker(false)}
+              />
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>

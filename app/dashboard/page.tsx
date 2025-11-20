@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { useReactionsStore } from "@/store/reactions";
 import GuildsRail from "@/components/Navigation/Guild/GuildsRail";
 import ChannelsColumn from "@/components/Navigation/Channel/ChannelsColumn";
 import MembersSidebar from "@/components/Navigation/Members/MembersSidebar";
@@ -10,6 +11,7 @@ import ChatView from "@/components/chat/ChatView";
 import type { ChatMessage } from "@/types/chat";
 import { useWebSocket } from "@/services/ws/useMockWebSocket";
 import { fetchMessages } from "@/services/api/messages";
+import { wsClient } from "@/lib/wsClient";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -33,6 +35,25 @@ export default function DashboardPage() {
 
     loadMessages();
   }, [currentChannel]);
+  useEffect(() => {
+    const handleReactionAdd = (data: any) => {
+      const { messageId, emoji, userId } = data;
+      useReactionsStore.getState().addReaction(messageId, emoji, userId);
+    };
+
+    const handleReactionRemove = (data: any) => {
+      const { messageId, emoji, userId } = data;
+      useReactionsStore.getState().removeReaction(messageId, emoji, userId);
+    };
+
+    wsClient.on("reaction:add", handleReactionAdd);
+    wsClient.on("reaction:remove", handleReactionRemove);
+
+    return () => {
+      wsClient.off("reaction:add", handleReactionAdd);
+      wsClient.off("reaction:remove", handleReactionRemove);
+    };
+  }, []);
 
   // WebSocket connection
   const handleNewMessage = useCallback((msg: ChatMessage) => {

@@ -24,6 +24,23 @@ export interface MessageCreateEvent {
   payload: Message;
   tempId?: string | null;
 }
+export interface ReactionAddEvent {
+  type: "reaction:add";
+  payload: {
+    messageId: string;
+    emoji: string;
+    userId: string;
+  };
+}
+
+export interface ReactionRemoveEvent {
+  type: "reaction:remove";
+  payload: {
+    messageId: string;
+    emoji: string;
+    userId: string;
+  };
+}
 
 export interface PresenceUpdateEvent {
   type: "presence:update";
@@ -34,7 +51,11 @@ export interface PresenceUpdateEvent {
   };
 }
 
-export type WSMessage = MessageCreateEvent | PresenceUpdateEvent;
+export type WSMessage =
+  | MessageCreateEvent
+  | PresenceUpdateEvent
+  | ReactionAddEvent
+  | ReactionRemoveEvent;
 
 export interface ChatState {
   messages: ChatMessage[];

@@ -11,23 +11,24 @@ export type Member = {
 export const mockMembers: Member[] = [
   {
     id: "1",
-    username: "Eshwar S",
-    avatar: "/avatars/a1.png",
+    username: "",
+    avatar: "",
     status: "online",
     role: "Owner",
     tag: "#0001",
   },
   {
     id: "2",
-    username: "InnocentZERO",
-    avatar: "/avatars/a2.png",
+    username: "",
+    avatar:
+      "http://googleusercontent.com/image_collection/image_retrieval/1273516072920196088_0",
     status: "offline",
     role: "Members",
     tag: "#0023",
   },
   {
     id: "3",
-    username: "KingDudeDS",
+    username: "",
     avatar: "/avatars/a3.png",
     status: "offline",
     role: "Members",
@@ -35,7 +36,7 @@ export const mockMembers: Member[] = [
   },
   {
     id: "4",
-    username: "MONJIRO",
+    username: "",
     avatar: "/avatars/a4.png",
     status: "idle",
     role: "Moderator",

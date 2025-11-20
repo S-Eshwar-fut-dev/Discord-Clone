@@ -1,4 +1,4 @@
-import { ChatMessage } from "@/components/chat/MessageItem";
+import { ChatMessage } from "@/types/chat";
 
 export const mockMessages: ChatMessage[] = [
   {
@@ -6,7 +6,7 @@ export const mockMessages: ChatMessage[] = [
     channelId: "general",
     author: {
       id: "u1",
-      username: "Eshwar",
+      username: "Eshwar S",
       avatar: "/avatars/1.png",
       status: "online",
     },
@@ -18,7 +18,7 @@ export const mockMessages: ChatMessage[] = [
     channelId: "general",
     author: {
       id: "u2",
-      username: "InnocentZERO",
+      username: "InnocentZero",
       avatar: "/avatars/2.png",
       status: "offline",
     },
