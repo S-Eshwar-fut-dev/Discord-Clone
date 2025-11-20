@@ -1,82 +1,129 @@
-// services/ws/useMockWebSocket.ts
 "use client";
 
-import { useEffect, useRef } from "react";
-import type { ChatMessage } from "@/components/chat/MessageItem";
+import { useEffect, useRef, useCallback } from "react";
+import type { ChatMessage } from "@/types/chat";
 
-/**
- * Simple singleton event bus to simulate server broadcasts.
- * - use connect() to "open" connection
- * - send('message:create', payload) to broadcast to all listeners (including sender)
- */
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000/ws";
 
-type Handler = (data: any) => void;
-
-class MockBus {
-  bus = new EventTarget();
-
-  send(eventName: string, payload: any) {
-    const ev = new CustomEvent(eventName, { detail: payload });
-    // fire asynchronously to mimic network
-    setTimeout(() => this.bus.dispatchEvent(ev), 20);
-  }
-
-  on(eventName: string, handler: Handler) {
-    const wrapper = (ev: Event) => handler((ev as CustomEvent).detail);
-    // store wrapper so we can remove (keeps simple)
-    (handler as any).__wrapper = wrapper;
-    this.bus.addEventListener(eventName, wrapper as EventListener);
-  }
-
-  off(eventName: string, handler: Handler) {
-    const wrapper = (handler as any).__wrapper;
-    if (wrapper)
-      this.bus.removeEventListener(eventName, wrapper as EventListener);
-  }
+interface WSMessage {
+  type: string;
+  payload?: any;
+  tempId?: string | null;
 }
 
-const BUS = new MockBus();
-
-export function useMockWebSocket(
+export function useWebSocket(
   channelId: string,
   onMessage: (m: ChatMessage) => void
 ) {
+  const ws = useRef<WebSocket | null>(null);
+  const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const connected = useRef(false);
 
-  useEffect(() => {
-    if (!channelId) return;
-    // subscribe to server broadcasts for this channel
-    const handler = (payload: ChatMessage) => {
-      if (payload.channelId === channelId) onMessage(payload);
-    };
-    BUS.on("message:created", handler);
-    connected.current = true;
+  const connect = useCallback(() => {
+    if (ws.current?.readyState === WebSocket.OPEN) return;
 
-    return () => {
-      BUS.off("message:created", handler);
-      connected.current = false;
-    };
+    try {
+      const socket = new WebSocket(WS_URL);
+
+      socket.onopen = () => {
+        console.log("[WS] Connected");
+        connected.current = true;
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data: WSMessage = JSON.parse(event.data);
+
+          if (data.type === "connection:ready") {
+            console.log("[WS] Connection ready");
+          }
+
+          if (data.type === "message:created" && data.payload) {
+            const msg = data.payload as ChatMessage;
+            if (msg.channelId === channelId) {
+              onMessage(msg);
+            }
+          }
+
+          if (data.type === "presence:update" && data.payload) {
+            // Handle presence updates if needed
+            console.log("[WS] Presence update:", data.payload);
+          }
+        } catch (err) {
+          console.error("[WS] Error parsing message:", err);
+        }
+      };
+
+      socket.onerror = (error) => {
+        console.error("[WS] Error:", error);
+      };
+
+      socket.onclose = () => {
+        console.log("[WS] Disconnected");
+        connected.current = false;
+        // Reconnect after 3 seconds
+        reconnectTimeout.current = setTimeout(connect, 3000);
+      };
+
+      ws.current = socket;
+    } catch (err) {
+      console.error("[WS] Connection error:", err);
+      reconnectTimeout.current = setTimeout(connect, 3000);
+    }
   }, [channelId, onMessage]);
 
-  function sendCreateMessage(payload: ChatMessage) {
-    // in a real WS you would send to server - here we "persist" and broadcast
-    // fake server adds id + createdAt and broadcasts back as created message
-    const serverMessage: ChatMessage = {
-      ...payload,
-      id: payload.id.startsWith("temp_")
-        ? "m_" + Math.random().toString(36).slice(2, 9)
-        : payload.id,
-      createdAt: new Date().toISOString(),
-      temp: false,
+  useEffect(() => {
+    connect();
+
+    return () => {
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
+      if (ws.current) {
+        ws.current.close();
+      }
     };
-    // broadcast
-    BUS.send("message:created", serverMessage);
-  }
+  }, [connect]);
+
+  const sendCreateMessage = useCallback(
+    (payload: {
+      channelId: string;
+      content: string;
+      authorId: string;
+      tempId?: string;
+      attachments?: Array<{ url: string; filename?: string }>;
+    }) => {
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(
+          JSON.stringify({
+            type: "message:create",
+            payload,
+          })
+        );
+      } else {
+        console.error("[WS] Not connected");
+      }
+    },
+    []
+  );
+
+  const setPresence = useCallback(
+    (userId: string, status: "online" | "idle" | "dnd" | "offline") => {
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(
+          JSON.stringify({
+            type: "presence:set",
+            payload: { userId, status },
+          })
+        );
+      }
+    },
+    []
+  );
 
   return {
     connected: connected.current,
     sendCreateMessage,
-    // expose BUS for advanced testing if needed
-    _bus: BUS,
+    setPresence,
   };
 }
