@@ -1,4 +1,4 @@
-export function formatMessageTime(iso: string): string {
+export function formatFullTimestamp(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
 

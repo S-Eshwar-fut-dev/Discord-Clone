@@ -150,10 +150,6 @@ export class APIException extends Error {
   }
 }
 
-// ============================================================================
-// WebSocket Event Types
-// ============================================================================
-
 export interface WSEvent<T = any> {
   type: string;
   payload: T;
