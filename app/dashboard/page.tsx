@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentChannel] = useState("c-general");
+  const [currentUserId] = useState("u1");
   const [loading, setLoading] = useState(true);
 
   // Load initial messages
@@ -35,6 +36,8 @@ export default function DashboardPage() {
 
     loadMessages();
   }, [currentChannel]);
+
+  // WebSocket listeners
   useEffect(() => {
     const handleReactionAdd = (data: any) => {
       const { messageId, emoji, userId } = data;
@@ -46,19 +49,38 @@ export default function DashboardPage() {
       useReactionsStore.getState().removeReaction(messageId, emoji, userId);
     };
 
+    const handleMessageUpdated = (data: any) => {
+      const updatedMessage = data as ChatMessage;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === updatedMessage.id
+            ? { ...updatedMessage, editedAt: new Date().toISOString() }
+            : msg
+        )
+      );
+    };
+
+    const handleMessageDeleted = (data: any) => {
+      const { messageId } = data;
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+    };
+
     wsClient.on("reaction:add", handleReactionAdd);
     wsClient.on("reaction:remove", handleReactionRemove);
+    wsClient.on("message:updated", handleMessageUpdated);
+    wsClient.on("message:deleted", handleMessageDeleted);
 
     return () => {
       wsClient.off("reaction:add", handleReactionAdd);
       wsClient.off("reaction:remove", handleReactionRemove);
+      wsClient.off("message:updated", handleMessageUpdated);
+      wsClient.off("message:deleted", handleMessageDeleted);
     };
   }, []);
 
-  // WebSocket connection
+  // Handle new messages
   const handleNewMessage = useCallback((msg: ChatMessage) => {
     setMessages((prev) => {
-      // Replace temp message if it exists
       const filtered = prev.filter((m) => !m.temp || m.id !== msg.id);
       return [...filtered, msg];
     });
@@ -66,12 +88,13 @@ export default function DashboardPage() {
 
   const { sendCreateMessage } = useWebSocket(currentChannel, handleNewMessage);
 
+  // Handle send message
   const handleSend = useCallback(
     (m: ChatMessage) => {
-      // Add temp message immediately
+      // Add temp message
       setMessages((prev) => [...prev, m]);
 
-      // Send to server via WebSocket
+      // Send via WebSocket
       sendCreateMessage({
         channelId: m.channelId,
         content: m.content,
@@ -82,6 +105,46 @@ export default function DashboardPage() {
     },
     [sendCreateMessage]
   );
+
+  // Handle edit message
+  const handleEditMessage = useCallback(
+    async (messageId: string, content: string) => {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                content,
+                editedAt: new Date().toISOString(),
+              }
+            : msg
+        )
+      );
+
+      // Send via WebSocket
+      if (wsClient.isConnected) {
+        wsClient.send("message:update", {
+          messageId,
+          content,
+        });
+      }
+    },
+    []
+  );
+
+  // Handle delete message
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    // Optimistic delete
+    setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+
+    // Send via WebSocket
+    if (wsClient.isConnected) {
+      wsClient.send("message:delete", {
+        messageId,
+      });
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -110,8 +173,13 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#313338]">
         <ChatView
           channelId={currentChannel}
+          channelName="general"
+          channelTopic="General chat for everyone"
           messages={messages}
+          currentUserId={currentUserId}
           onSend={handleSend}
+          onEditMessage={handleEditMessage}
+          onDeleteMessage={handleDeleteMessage}
         />
       </div>
 

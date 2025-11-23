@@ -16,11 +16,11 @@ import type { ChatMessage } from "@/types/chat";
 
 export interface MessageListVirtualProps {
   messages: ChatMessage[];
+  currentUserId?: string;
   unreadMessageId?: string | null;
   loading?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
-  currentUserId?: string;
   onEditMessage?: (messageId: string, content: string) => Promise<void>;
   onDeleteMessage?: (messageId: string) => Promise<void>;
 }
@@ -31,14 +31,16 @@ type ListItem =
   | { type: "message"; message: ChatMessage; isFirstInGroup: boolean }
   | { type: "loader"; id: string };
 
+/**
+ * Virtualized message list with edit/delete support
+ */
 export default function MessageListVirtual({
   messages,
+  currentUserId = "u1",
   unreadMessageId,
   loading = false,
   hasMore = false,
   onLoadMore,
-  // 👇 Destructure new props
-  currentUserId,
   onEditMessage,
   onDeleteMessage,
 }: MessageListVirtualProps) {
@@ -47,11 +49,10 @@ export default function MessageListVirtual({
   const [hasTopShadow, setHasTopShadow] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Build list items with day separators and grouping
+  // Build list items
   const listItems: ListItem[] = React.useMemo(() => {
     const items: ListItem[] = [];
 
-    // Add loader at top if has more
     if (hasMore && !loading) {
       items.push({ type: "loader", id: "top-loader" });
     }
@@ -87,7 +88,7 @@ export default function MessageListVirtual({
     return items;
   }, [messages, unreadMessageId, hasMore, loading]);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom
   useEffect(() => {
     if (atBottom && messages.length > 0) {
       setTimeout(() => {
@@ -100,7 +101,7 @@ export default function MessageListVirtual({
     }
   }, [messages.length, atBottom, listItems.length]);
 
-  // Handle load more
+  // Load more handler
   const handleLoadMore = async () => {
     if (!hasMore || loadingMore || !onLoadMore) return;
     setLoadingMore(true);
@@ -111,7 +112,7 @@ export default function MessageListVirtual({
     }
   };
 
-  // Show initial loading state
+  // Initial loading
   if (loading && messages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -123,7 +124,7 @@ export default function MessageListVirtual({
     );
   }
 
-  // Show empty state
+  // Empty state
   if (!loading && messages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -177,7 +178,6 @@ export default function MessageListVirtual({
             return <UnreadMarker />;
           }
 
-          // 👇 Pass props to MessageItem here
           return (
             <MessageItem
               message={item.message}
