@@ -7,7 +7,8 @@ import ChannelHeader from "./ChannelHeader";
 import type { ChatMessage } from "@/types/chat";
 import { wsClient } from "@/lib/wsClient";
 import TypingIndicator from "./TypingIndicator";
-
+import { useThreads } from "@/hooks/useThreads";
+import ThreadSidebar from "@/components/chat/ThreadSidebar";
 export interface ChatViewProps {
   channelId?: string;
   channelName?: string;
@@ -40,13 +41,12 @@ export default function ChatView({
   onLoadMore,
   unreadMessageId,
 }: ChatViewProps) {
-  // Handle edit message
+  const { activeThread } = useThreads();
   const handleEdit = useCallback(
     async (messageId: string, content: string) => {
       if (onEditMessage) {
         await onEditMessage(messageId, content);
       } else {
-        // Fallback: Send via WebSocket
         if (wsClient.isConnected) {
           wsClient.send("message:update", {
             messageId,
@@ -64,7 +64,6 @@ export default function ChatView({
       if (onDeleteMessage) {
         await onDeleteMessage(messageId);
       } else {
-        // Fallback: Send via WebSocket
         if (wsClient.isConnected) {
           wsClient.send("message:delete", {
             messageId,
@@ -97,9 +96,11 @@ export default function ChatView({
           onDeleteMessage={handleDelete}
         />
       </div>
-      <TypingIndicator channelId={channelId} />
-      {/* Composer */}
-      <Composer channelId={channelId} onSend={onSend} />
+      <div className="relative bg-[#313338] shrink-0">
+        <TypingIndicator channelId={channelId} />
+        <Composer channelId={channelId} onSend={onSend} />
+      </div>
+      <div>{activeThread && <ThreadSidebar />}</div>
     </div>
   );
 }
