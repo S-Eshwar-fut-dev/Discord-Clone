@@ -22,6 +22,7 @@ export function useCreateServer(onClose: () => void) {
 
     setLoading(true);
     try {
+      // 1. Upload Icon if exists
       let iconUrl = undefined;
       if (iconFile) {
         const uploaded = await uploadFiles();
