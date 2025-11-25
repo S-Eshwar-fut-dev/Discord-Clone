@@ -24,9 +24,7 @@ export interface ChatViewProps {
   unreadMessageId?: string | null;
 }
 
-/**
- * Main chat view with message editing and deletion
- */
+
 export default function ChatView({
   channelId = "general",
   channelName = "general",
