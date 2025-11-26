@@ -1,15 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown, Search, Bell, Users, Settings, Plus } from "lucide-react";
+import { ChevronDown, Bell, Settings } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+
 import ChannelCategory from "./ChannelCategory";
 import ChannelItem from "./ChannelItem";
 import IconButton from "@/components/ui/IconButton";
 import CreateChannelModal from "@/components/overlays/CreateChannelModal";
-import { mockChannels } from "@/components/mocks/channels";
 import ChannelSettingsModal from "@/components/overlays/ChannelSettingsModal";
 import VoiceControlPanel from "@/components/voice/VoiceControlPanel";
+import UserStatusMenu from "@/components/Navigation/User/UserStatusMenu";
+import CustomStatusModal from "@/components/overlays/CustomStatusModal";
+import { mockChannels } from "@/components/mocks/channels";
 import { useVoice } from "@/hooks/useVoice";
+import { useIdle } from "@/hooks/useIdle";
 
 interface Channel {
   id: string;
@@ -25,11 +30,21 @@ export default function ChannelsColumn() {
   const [activeChannel, setActiveChannel] = useState("1");
   const [showServerMenu, setShowServerMenu] = useState(false);
   const [showCreateChannel, setShowCreateChannel] = useState(false);
+
+  // Status Menu State
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showCustomStatus, setShowCustomStatus] = useState(false);
+
   const [channels, setChannels] = useState<Channel[]>(
     mockChannels as Channel[]
   );
+
   const { currentChannelId, joinChannel, participants } = useVoice();
   const [settingsChannel, setSettingsChannel] = useState<Channel | null>(null);
+
+  // Initialize Auto-Idle hook
+  useIdle();
+
   // Group channels by category
   const groupedChannels = channels.reduce((acc, channel) => {
     if (!acc[channel.category]) {
@@ -38,6 +53,8 @@ export default function ChannelsColumn() {
     acc[channel.category].push(channel);
     return acc;
   }, {} as Record<string, Channel[]>);
+
+  // --- Handlers ---
 
   const handleCreateChannel = (data: {
     name: string;
@@ -102,13 +119,6 @@ export default function ChannelsColumn() {
               Create Channel
             </button>
             <div className="my-1 border-t border-[#3f4147]" />
-            <button className="w-full px-3 py-2 text-left text-sm text-[#dbdee1] hover:bg-[#35373c] rounded transition-colors">
-              Notification Settings
-            </button>
-            <button className="w-full px-3 py-2 text-left text-sm text-[#dbdee1] hover:bg-[#35373c] rounded transition-colors">
-              Privacy Settings
-            </button>
-            <div className="my-1 border-t border-[#3f4147]" />
             <button className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-[#35373c] rounded transition-colors">
               Leave Server
             </button>
@@ -138,12 +148,11 @@ export default function ChannelsColumn() {
                           ? participants
                           : []
                       }
-                      //Voice channel
                       onClick={() => {
                         if (channel.type === "voice") {
-                          joinChannel(channel.id); // Join voice
+                          joinChannel(channel.id);
                         } else {
-                          setActiveChannel(channel.id); // Switch text channel
+                          setActiveChannel(channel.id);
                         }
                       }}
                     />
@@ -165,11 +174,16 @@ export default function ChannelsColumn() {
             )
           )}
         </div>
+
+        {/* Voice Control Panel */}
         <VoiceControlPanel />
 
-        {/* User Profile Bar */}
-        <div className="flex-none h-14 px-2 flex items-center justify-between bg-[#232428] border-t border-[#1e1f22]">
-          <div className="flex items-center gap-2 min-w-0">
+        {/* User Profile Bar (Updated) */}
+        <div className="flex-none h-14 px-2 flex items-center justify-between bg-[#232428] border-t border-[#1e1f22] relative">
+          <div
+            className="flex items-center gap-2 min-w-0 hover:bg-[#3f4147] p-1 rounded cursor-pointer transition-colors"
+            onClick={() => setShowStatusMenu(!showStatusMenu)}
+          >
             <div className="relative">
               <img
                 src="/avatars/1.png"
@@ -194,9 +208,20 @@ export default function ChannelsColumn() {
               size="sm"
             />
           </div>
+
+          {/* Status Menu Popover */}
+          <AnimatePresence>
+            {showStatusMenu && (
+              <UserStatusMenu
+                onClose={() => setShowStatusMenu(false)}
+                onOpenCustomStatus={() => setShowCustomStatus(true)}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
+      {/* Modals */}
       <ChannelSettingsModal
         channel={settingsChannel}
         onClose={() => setSettingsChannel(null)}
@@ -208,6 +233,12 @@ export default function ChannelsColumn() {
         isOpen={showCreateChannel}
         onClose={() => setShowCreateChannel(false)}
         onSubmit={handleCreateChannel}
+      />
+
+      {/* Custom Status Modal */}
+      <CustomStatusModal
+        isOpen={showCustomStatus}
+        onClose={() => setShowCustomStatus(false)}
       />
     </>
   );
