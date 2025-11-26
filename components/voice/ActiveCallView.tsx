@@ -9,8 +9,6 @@ import { cn } from "@/lib/utils/cn";
 
 export default function ActiveCallView() {
   const { participants, simulateSpeaking } = useVoice();
-
-  // Simulate speaking animation loop
   useEffect(() => {
     const interval = setInterval(simulateSpeaking, 500);
     return () => clearInterval(interval);
