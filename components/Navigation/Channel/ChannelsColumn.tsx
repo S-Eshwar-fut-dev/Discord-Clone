@@ -8,6 +8,8 @@ import IconButton from "@/components/ui/IconButton";
 import CreateChannelModal from "@/components/overlays/CreateChannelModal";
 import { mockChannels } from "@/components/mocks/channels";
 import ChannelSettingsModal from "@/components/overlays/ChannelSettingsModal";
+import VoiceControlPanel from "@/components/voice/VoiceControlPanel";
+import { useVoice } from "@/hooks/useVoice";
 
 interface Channel {
   id: string;
@@ -26,6 +28,7 @@ export default function ChannelsColumn() {
   const [channels, setChannels] = useState<Channel[]>(
     mockChannels as Channel[]
   );
+  const { currentChannelId, joinChannel, participants } = useVoice();
   const [settingsChannel, setSettingsChannel] = useState<Channel | null>(null);
   // Group channels by category
   const groupedChannels = channels.reduce((acc, channel) => {
@@ -129,7 +132,20 @@ export default function ChannelsColumn() {
                       selected={activeChannel === channel.id}
                       unread={channel.unread}
                       mentions={channel.mentions}
-                      onClick={() => setActiveChannel(channel.id)}
+                      connectedUsers={
+                        channel.type === "voice" &&
+                        currentChannelId === channel.id
+                          ? participants
+                          : []
+                      }
+                      //Voice channel
+                      onClick={() => {
+                        if (channel.type === "voice") {
+                          joinChannel(channel.id); // Join voice
+                        } else {
+                          setActiveChannel(channel.id); // Switch text channel
+                        }
+                      }}
                     />
                     {/* Settings Gear - Appears on Hover */}
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity">
@@ -149,6 +165,7 @@ export default function ChannelsColumn() {
             )
           )}
         </div>
+        <VoiceControlPanel />
 
         {/* User Profile Bar */}
         <div className="flex-none h-14 px-2 flex items-center justify-between bg-[#232428] border-t border-[#1e1f22]">
