@@ -80,9 +80,7 @@ export default function GuildsRail() {
               onClick={() => setShowCreateModal(true)}
               className={cn(
                 "group relative flex items-center justify-center w-12 h-12 transition-all duration-200",
-                // Default state: Circle, Dark BG, Green Text
                 "rounded-3xl bg-[#313338] text-[#23a559]",
-                // Hover state: Squircle, Green BG, White Text
                 "hover:rounded-2xl hover:bg-[#23a559] hover:text-white"
               )}
             >
