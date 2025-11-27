@@ -9,6 +9,11 @@ export interface ChatMessage extends Message {
   optimistic?: boolean;
 }
 
+export interface PongEvent {
+  type: "pong";
+  payload: Record<string, never>; // Empty payload
+}
+
 // Alias for compatibility (some components expect ChatUser)
 export type ChatUser = User;
 
@@ -18,11 +23,28 @@ export interface SendMessagePayload {
   attachments?: Attachment[];
   tempId?: string;
 }
+//export interface ConnectionReadyEvent {
+//type: "connection:ready";
+//payload: {
+//connectionId: string;
+//};
+//}
 
 export interface MessageCreateEvent {
   type: "message:created";
   payload: Message;
   tempId?: string | null;
+}
+export interface MessageUpdateEvent {
+  type: "message:update";
+  payload: Partial<Message> & { id: string };
+}
+
+export interface MessageDeleteEvent {
+  type: "message:delete";
+  payload: {
+    messageId: string;
+  };
 }
 export interface ReactionAddEvent {
   type: "reaction:add";
@@ -52,7 +74,11 @@ export interface PresenceUpdateEvent {
 }
 
 export type WSMessage =
+  | ConnectionReadyEvent
+  | PongEvent
   | MessageCreateEvent
+  | MessageUpdateEvent
+  | MessageDeleteEvent
   | PresenceUpdateEvent
   | ReactionAddEvent
   | ReactionRemoveEvent;
