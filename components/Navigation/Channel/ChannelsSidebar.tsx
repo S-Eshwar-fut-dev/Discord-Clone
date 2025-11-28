@@ -25,7 +25,7 @@ export default function ChannelsSidebar() {
       <div className="flex-1 overflow-y-auto py-2">
         {Object.keys(grouped).map((category) => (
           <div key={category}>
-            <ChannelCategory name={category} />
+            <ChannelCategory name={category} children={undefined} />
 
             {grouped[category].map((ch: any) => (
               <ChannelItem

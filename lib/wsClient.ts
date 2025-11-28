@@ -172,10 +172,10 @@ export class WSClient {
 
     if (this.ws?.readyState !== WebSocket.OPEN) {
       if (priority) {
-        this.log("⏳ WebSocket not connected, queuing priority message");
+        this.log("WebSocket not connected, queuing priority message");
         this.messageQueue.unshift(message);
       } else {
-        this.log("⏳ WebSocket not connected, queuing message");
+        this.log("WebSocket not connected, queuing message");
         this.messageQueue.push(message);
       }
 

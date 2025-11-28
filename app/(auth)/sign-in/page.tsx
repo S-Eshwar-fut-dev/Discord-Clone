@@ -34,7 +34,7 @@ export default function SignInPage() {
       setUser(response.user);
 
       // Redirect to last visited channel or home
-      router.push("/channels/@me");
+      router.push("/dashboard");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Login failed. Please try again."
