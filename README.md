@@ -6,15 +6,15 @@ This repository houses the frontend client for a distributed, microservices-base
 
 ## Table of Contents
 
-- [About the Project](https://www.google.com/search?q=%23about-the-project)
-- [System Architecture](https://www.google.com/search?q=%23system-architecture)
-- [Technical Architecture (Frontend)](https://www.google.com/search?q=%23technical-architecture-frontend)
-- [Current Status & Roadmap](https://www.google.com/search?q=%23current-status--roadmap)
-- [Technologies Used](https://www.google.com/search?q=%23technologies-used)
-- [Getting Started](https://www.google.com/search?q=%23getting-started)
-- [Project Structure](https://www.google.com/search?q=%23project-structure)
-- [Contributing](https://www.google.com/search?q=%23contributing)
-- [License](https://www.google.com/search?q=%23license)
+- [About the Project]
+- [System Architecture]
+- [Technical Architecture (Frontend)]
+- [Current Status & Roadmap]
+- [Technologies Used]
+- [Getting Started]
+- [Project Structure]
+- [Contributing]
+- [License]
 
 ## About the Project
 
