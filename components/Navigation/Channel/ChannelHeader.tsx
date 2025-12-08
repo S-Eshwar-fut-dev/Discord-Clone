@@ -1,4 +1,3 @@
-// components/Navigation/Channel/ChannelHeader.tsx
 "use client";
 
 import { useState } from "react";
@@ -19,6 +18,7 @@ export type Channel = {
   id: string;
   name: string;
   topic?: string | null;
+  icon?: string;
 };
 
 export default function ChannelHeader({
@@ -39,11 +39,15 @@ export default function ChannelHeader({
         {/* LEFT */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="flex items-center gap-3">
-            <Hash className="text-gray-300" />
+            {channel.icon ? (
+              <span className="text-xl">{channel.icon}</span>
+            ) : (
+              <Hash className="text-gray-300" />
+            )}
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-white text-lg font-semibold truncate">
-                  #{channel.name}
+                  {channel.icon ? channel.name : `#${channel.name}`}
                 </h2>
                 <span className="text-xs text-gray-400 px-2 py-1 rounded-md bg-[#171718] hidden sm:inline">
                   {guildName}

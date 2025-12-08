@@ -104,7 +104,7 @@ export default function Composer({
       setText("");
       clearFiles();
     } catch (error) {
-      console.error("Failed to send message:", error);
+      //console.error("Failed to send message:", error);
     } finally {
       setSending(false);
     }

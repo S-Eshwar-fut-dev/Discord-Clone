@@ -4,7 +4,7 @@ import React from "react";
 import { Hash, Volume2, Lock, Settings } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import IconButton from "@/components/ui/IconButton";
-import Avatar from "@/components/ui/Avatar"; // Import Avatar
+import Avatar from "@/components/ui/Avatar";
 
 interface ChannelItemProps {
   name: string;
@@ -13,11 +13,12 @@ interface ChannelItemProps {
   locked?: boolean;
   unread?: boolean;
   mentions?: number;
+  icon?: string;
   connectedUsers?: Array<{
     id: string;
     avatar?: string | null;
     username: string;
-  }>; // 🆕 New Prop
+  }>;
   onClick?: () => void;
 }
 
@@ -28,7 +29,8 @@ export default function ChannelItem({
   locked = false,
   unread = false,
   mentions = 0,
-  connectedUsers = [], // Default empty
+  icon,
+  connectedUsers = [],
   onClick,
 }: ChannelItemProps) {
   const Icon = type === "text" ? Hash : Volume2;
@@ -38,13 +40,18 @@ export default function ChannelItem({
       <button
         onClick={onClick}
         className={cn(
-          "group w-full flex items-center gap-1.5 px-2 py-1.5 rounded transition-colors text-left",
+          "group w-full flex items-center gap-1.5 px-2 py-1.5 rounded transition-all duration-200 text-left relative channel-item",
           selected
-            ? "bg-[#404249] text-white"
-            : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+            ? "bg-[#404249] text-white channel-item-active"
+            : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1] channel-item-hover"
         )}
       >
-        <Icon size={20} className="shrink-0" />
+        {/* Channel Icon or Default Icon */}
+        {icon ? (
+          <span className="shrink-0 text-base leading-none">{icon}</span>
+        ) : (
+          <Icon size={20} className="shrink-0" />
+        )}
 
         <span
           className={cn(
@@ -55,13 +62,22 @@ export default function ChannelItem({
           {name}
         </span>
 
-        {/* Icons (Lock, Badge, Settings) - Keep existing logic */}
+        {/* Unread Badge */}
+        {unread && !selected && !mentions && (
+          <div className="shrink-0 w-2 h-2 bg-white rounded-full" />
+        )}
+
+        {/* Lock Icon */}
         {locked && <Lock size={14} className="shrink-0 text-[#87888c]" />}
+
+        {/* Mention Badge */}
         {mentions > 0 && (
           <span className="shrink-0 px-1.5 py-0.5 bg-[#f23f43] text-white text-xs font-bold rounded-full min-w-[18px] text-center">
             {mentions > 99 ? "99+" : mentions}
           </span>
         )}
+
+        {/* Settings Icon (on hover for selected) */}
         {selected && (
           <IconButton
             icon={<Settings size={16} />}
@@ -73,7 +89,7 @@ export default function ChannelItem({
         )}
       </button>
 
-      {/* 🆕 Connected Users List (Voice Only) */}
+      {/* Connected Users List (Voice Only) */}
       {type === "voice" && connectedUsers.length > 0 && (
         <div className="pl-8 pr-2 pb-1 space-y-1">
           {connectedUsers.map((user) => (

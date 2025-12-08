@@ -36,6 +36,7 @@ interface Channel {
   unread?: boolean;
   mentions?: number;
   topic?: string;
+  icon?: string;
 }
 
 interface ChannelsColumnProps {
@@ -66,10 +67,8 @@ export default function ChannelsColumn({
 
   const { currentChannelId, joinChannel, participants } = useVoice();
 
-  // Initialize Auto-Idle hook
   useIdle();
 
-  // Group channels by category
   const groupedChannels = channels.reduce((acc, channel) => {
     if (!acc[channel.category]) {
       acc[channel.category] = [];
@@ -87,6 +86,7 @@ export default function ChannelsColumn({
       name: data.name,
       type: data.type,
       category: "Text Channels",
+      icon: data.type === "text" ? "💬" : "🔊",
     };
     setChannels([...channels, newChannel]);
   };
@@ -174,6 +174,7 @@ export default function ChannelsColumn({
                       selected={activeChannelId === channel.id}
                       unread={channel.unread}
                       mentions={channel.mentions}
+                      icon={channel.icon}
                       connectedUsers={
                         channel.type === "voice" &&
                         currentChannelId === channel.id
@@ -276,7 +277,6 @@ export default function ChannelsColumn({
   );
 }
 
-// MenuItem Component
 function MenuItem({
   label,
   icon,
