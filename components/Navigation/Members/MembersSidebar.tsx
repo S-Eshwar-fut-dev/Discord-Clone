@@ -75,7 +75,13 @@ export default function MembersSidebar({
       {/* Members list */}
       <div className="flex-1 overflow-y-auto custom-scroll px-2 py-2">
         {groupedMembers.map(([role, members]) => (
-          <div key={role} className="mb-4">
+          <motion.div
+            key={role}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mb-4"
+          >
             {/* Role header */}
             <div className="flex items-center justify-between px-2 mb-1">
               <h3 className="text-xs font-semibold uppercase text-[#949ba4]">
@@ -90,7 +96,7 @@ export default function MembersSidebar({
                 <MemberItem key={member.id} member={member} compact={compact} />
               ))}
             </div>
-          </div>
+          </motion.div>
         ))}
 
         {groupedMembers.length === 0 && (
