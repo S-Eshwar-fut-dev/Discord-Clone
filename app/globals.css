@@ -212,7 +212,7 @@ body {
 
 /* Selection */
 ::selection {
-  background: #4752c4;
+  background: #00a8fc;
   color: white;
 }
 no-scroll::-webkit-scrollbar {

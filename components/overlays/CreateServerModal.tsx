@@ -129,7 +129,7 @@ export default function CreateServerModal({
               </h3>
               <Button
                 variant="secondary"
-                className="w-full bg-[#4e5058] hover:bg-[#6d6f78] text-white transition-colors"
+                className="w-full bg-[#4726aa] hover:bg-[#6d6f78] text-white transition-colors"
                 onClick={onClose}
               >
                 Join a Server

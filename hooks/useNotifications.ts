@@ -9,7 +9,6 @@ export function useNotifications() {
 
   useEffect(() => {
     const handleNewNotification = (data: any) => {
-      // data structure depends on your backend event payload
       addNotification({
         type: data.type || "mention",
         guildId: data.guildId,
