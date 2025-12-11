@@ -10,6 +10,7 @@ import {
   Hash,
   Volume2,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
@@ -42,11 +43,15 @@ interface Channel {
 interface ChannelsColumnProps {
   guildId: string;
   guildName: string;
+  onOpenVoiceSettings?: () => void;
+  onOpenBoost?: () => void;
 }
 
 export default function ChannelsColumn({
   guildId,
   guildName,
+  onOpenVoiceSettings,
+  onOpenBoost,
 }: ChannelsColumnProps) {
   const router = useRouter();
   const params = useParams();
@@ -107,6 +112,10 @@ export default function ChannelsColumn({
   const handleChannelClick = (channel: Channel) => {
     if (channel.type === "voice") {
       joinChannel(channel.id);
+      // Open voice settings when joining voice channel
+      if (onOpenVoiceSettings) {
+        setTimeout(() => onOpenVoiceSettings(), 500);
+      }
     } else {
       router.push(`/channels/${guildId}/${channel.id}`);
     }
@@ -147,6 +156,16 @@ export default function ChannelsColumn({
               }}
             />
             <MenuItem label="Notification Settings" icon={<Bell size={16} />} />
+
+            {/* NEW: Server Boost Option */}
+            <MenuItem
+              label="Server Boost"
+              icon={<Sparkles size={16} />}
+              onClick={() => {
+                if (onOpenBoost) onOpenBoost();
+                setShowServerMenu(false);
+              }}
+            />
 
             <div className="my-1 border-t border-[#3f4147]" />
 

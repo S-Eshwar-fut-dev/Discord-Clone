@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Plus,
-  Gift,
-  Smile,
-  Paperclip,
-  X,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Plus, Gift, Smile, Image as ImageIcon } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import type { ChatMessage, ChatUser } from "@/types/chat";
 import IconButton from "../ui/IconButton";
@@ -17,7 +10,6 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { cn } from "@/lib/utils/cn";
 import { useTyping } from "@/hooks/useTyping";
 import ReactionPicker from "./reactions/ReactionPicker";
-import GifPicker from "./GifPicker";
 import { AnimatePresence } from "framer-motion";
 
 const DEFAULT_USER: ChatUser = {
@@ -31,17 +23,18 @@ interface ComposerProps {
   channelId?: string;
   me?: ChatUser;
   onSend?: (m: ChatMessage) => void;
+  onOpenGifPicker?: () => void;
 }
 
 export default function Composer({
   channelId = "general",
   me = DEFAULT_USER,
   onSend,
+  onOpenGifPicker,
 }: ComposerProps) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showGifPicker, setShowGifPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { startTyping } = useTyping(channelId);
@@ -86,30 +79,6 @@ export default function Composer({
     setText(e.target.value);
     if (e.target.value.length > 0) {
       startTyping();
-    }
-  };
-
-  // Handle GIF selection
-  const handleGifSelect = async (gifUrl: string) => {
-    setSending(true);
-
-    try {
-      const tempId = "temp_" + uuidv4().slice(0, 8);
-      const tempMessage: ChatMessage = {
-        id: tempId,
-        channelId,
-        author: me,
-        content: "",
-        attachments: [{ url: gifUrl, filename: "gif" }],
-        createdAt: new Date().toISOString(),
-        temp: true,
-      };
-
-      onSend?.(tempMessage);
-    } catch (error) {
-      console.error("Failed to send GIF:", error);
-    } finally {
-      setSending(false);
     }
   };
 
@@ -159,7 +128,7 @@ export default function Composer({
       {/* Emoji Picker */}
       <AnimatePresence>
         {showEmojiPicker && (
-          <div className="absolute bottom-full right-4 mb-2">
+          <div className="absolute bottom-full right-4 mb-2 z-50">
             <ReactionPicker
               onSelect={(emoji) => {
                 setText((prev) => prev + emoji);
@@ -167,18 +136,6 @@ export default function Composer({
                 textareaRef.current?.focus();
               }}
               onClose={() => setShowEmojiPicker(false)}
-            />
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* GIF Picker */}
-      <AnimatePresence>
-        {showGifPicker && (
-          <div className="absolute bottom-full right-4">
-            <GifPicker
-              onSelect={handleGifSelect}
-              onClose={() => setShowGifPicker(false)}
             />
           </div>
         )}
@@ -235,14 +192,8 @@ export default function Composer({
             <IconButton
               icon={<ImageIcon size={20} />}
               label="Send a GIF"
-              className={cn(
-                "text-[#b5bac1] hover:text-white",
-                showGifPicker && "text-white bg-[#4e5058]"
-              )}
-              onClick={() => {
-                setShowGifPicker(!showGifPicker);
-                setShowEmojiPicker(false);
-              }}
+              className="text-[#b5bac1] hover:text-white"
+              onClick={onOpenGifPicker}
             />
             <IconButton
               icon={<Smile size={20} />}
@@ -251,10 +202,7 @@ export default function Composer({
                 "text-[#b5bac1] hover:text-white",
                 showEmojiPicker && "text-white bg-[#4e5058]"
               )}
-              onClick={() => {
-                setShowEmojiPicker(!showEmojiPicker);
-                setShowGifPicker(false);
-              }}
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             />
           </div>
         </div>

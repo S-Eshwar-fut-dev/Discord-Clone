@@ -13,6 +13,9 @@ import { useWebSocket } from "@/services/ws/useMockWebSocket";
 import { fetchMessages } from "@/services/api/messages";
 import { wsClient } from "@/lib/wsClient";
 import FriendsView from "@/components/friends/FriendsView";
+import VoiceChannelSettings from "@/components/voice/VoiceChannelSettings";
+import ServerBoostModal from "@/components/overlays/ServerBoostModal";
+import GifPicker from "@/components/chat/GifPicker";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -21,6 +24,11 @@ export default function DashboardPage() {
   const [currentUserId] = useState("u1");
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"chat" | "friends">("chat");
+
+  // Modal states for integrated features
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [showBoostModal, setShowBoostModal] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   // Load initial messages
   useEffect(() => {
@@ -146,6 +154,28 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Handle GIF selection
+  const handleGifSelect = useCallback(
+    (gifUrl: string) => {
+      const tempMessage: ChatMessage = {
+        id: `temp_${Date.now()}`,
+        channelId: currentChannel,
+        author: {
+          id: currentUserId,
+          username: "You",
+          discriminator: "0000",
+        },
+        content: "",
+        attachments: [{ url: gifUrl, filename: "gif" }],
+        createdAt: new Date().toISOString(),
+        temp: true,
+      };
+      handleSend(tempMessage);
+      setShowGifPicker(false);
+    },
+    [currentChannel, currentUserId, handleSend]
+  );
+
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#313338] text-white">
@@ -158,39 +188,69 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen w-screen flex bg-[#313338] text-white overflow-hidden">
-      {/* Guilds Rail */}
-      <div className="flex-none w-[72px] bg-[#1e1f22] border-r border-[#1e1f22]">
-        <GuildsRail />
-      </div>
+    <>
+      <div className="h-screen w-screen flex bg-[#313338] text-white overflow-hidden">
+        {/* Guilds Rail */}
+        <div className="flex-none w-[72px] bg-[#1e1f22] border-r border-[#1e1f22]">
+          <GuildsRail />
+        </div>
 
-      {/* Channels Sidebar */}
-      <div className="flex-none w-60 bg-[#2b2d31] border-r border-[#1e1f22] flex flex-col min-h-0">
-        <ChannelsColumn guildId={""} guildName={""} />
-      </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#313338]">
-        {view === "friends" ? (
-          <FriendsView />
-        ) : (
-          <ChatView
-            channelId={currentChannel}
-            channelName="general"
-            channelTopic="General chat for everyone"
-            messages={messages}
-            currentUserId={currentUserId}
-            onSend={handleSend}
-            onEditMessage={handleEditMessage}
-            onDeleteMessage={handleDeleteMessage}
+        {/* Channels Sidebar */}
+        <div className="flex-none w-60 bg-[#2b2d31] border-r border-[#1e1f22] flex flex-col min-h-0">
+          <ChannelsColumn
+            guildId="1"
+            guildName="Eoncord HQ"
+            onOpenVoiceSettings={() => setShowVoiceSettings(true)}
+            onOpenBoost={() => setShowBoostModal(true)}
           />
-        )}
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#313338]">
+          {view === "friends" ? (
+            <FriendsView />
+          ) : (
+            <ChatView
+              channelId={currentChannel}
+              channelName="general"
+              channelTopic="General chat for everyone"
+              messages={messages}
+              currentUserId={currentUserId}
+              onSend={handleSend}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
+              onOpenGifPicker={() => setShowGifPicker(true)}
+            />
+          )}
+        </div>
+
+        {/* Members Sidebar */}
+        <div className="flex-none w-60 bg-[#2b2d31] border-l border-[#1e1f22] overflow-y-auto custom-scroll">
+          <MembersSidebar />
+        </div>
       </div>
 
-      {/* Members Sidebar */}
-      <div className="flex-none w-60 bg-[#2b2d31] border-l border-[#1e1f22] overflow-y-auto custom-scroll">
-        <MembersSidebar />
-      </div>
-    </div>
+      {/* Integrated Modals */}
+      <VoiceChannelSettings
+        isOpen={showVoiceSettings}
+        onClose={() => setShowVoiceSettings(false)}
+        channelName="Stream Room"
+      />
+
+      <ServerBoostModal
+        isOpen={showBoostModal}
+        onClose={() => setShowBoostModal(false)}
+        guildName="Eoncord HQ"
+      />
+
+      {showGifPicker && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <GifPicker
+            onSelect={handleGifSelect}
+            onClose={() => setShowGifPicker(false)}
+          />
+        </div>
+      )}
+    </>
   );
 }

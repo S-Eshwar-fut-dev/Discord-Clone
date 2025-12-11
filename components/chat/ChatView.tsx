@@ -25,6 +25,7 @@ export interface ChatViewProps {
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   unreadMessageId?: string | null;
+  onOpenGifPicker?: () => void;
 }
 
 export default function ChatView({
@@ -40,6 +41,7 @@ export default function ChatView({
   hasMore = false,
   onLoadMore,
   unreadMessageId,
+  onOpenGifPicker,
 }: ChatViewProps) {
   const { activeThread } = useThreads();
   const [showMembers, setShowMembers] = useState(true);
@@ -102,7 +104,11 @@ export default function ChatView({
         {/* Typing Indicator + Composer */}
         <div className="relative bg-[#313338] shrink-0">
           <TypingIndicator channelId={channelId} />
-          <Composer channelId={channelId} onSend={onSend} />
+          <Composer
+            channelId={channelId}
+            onSend={onSend}
+            onOpenGifPicker={onOpenGifPicker}
+          />
         </div>
       </div>
 
